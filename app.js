@@ -52,6 +52,7 @@ $(function() {
   updateTableLeft();
   updateTableRight();
   initOptions();
+  initSoftwareExportOptions();
   startWakeLoop()
 
   for (const pattern of PATTERNS) {
@@ -203,6 +204,49 @@ function initOptions() {
     command(portLeft, BRIGHTNESS_CMD, brightness);
     command(portRight, BRIGHTNESS_CMD, brightness);
   });
+}
+
+function initSoftwareExportOptions() {
+  $('#exportLeftSoftwareBtn').click(function() {
+    const grayscale = $('input[name="exportFormat"]:checked').val() !== 'binary';
+    exportMatrixSoftware(matrix_left, 'left', grayscale);
+  });
+
+  $('#exportRightSoftwareBtn').click(function() {
+    const grayscale = $('input[name="exportFormat"]:checked').val() !== 'binary';
+    exportMatrixSoftware(matrix_right, 'right', grayscale);
+  });
+}
+
+function exportMatrixSoftware(matrix, side, grayscale = true) {
+  const width = matrix[0].length;   // 9
+  const height = matrix.length;     // 34
+
+  // Fixed column-major: 9 columns x 34 rows
+  const vals = Array(width).fill(0).map(() => Array(height).fill(0));
+  for (let col = 0; col < width; col++) {
+    for (let row = 0; row < height; row++) {
+      const isLit = matrix[row][col] === 0;  // LED on
+      if (grayscale) {
+        vals[col][row] = isLit ? 255 : 0;
+      } else {
+        vals[col][row] = isLit ? 1 : 0;
+      }
+    }
+  }
+
+  const formatStr = grayscale ? 'grayscale' : 'binary';
+  const filename = `matrix_${side}_${formatStr}_colmajor.json`;
+
+  const blob = new Blob([JSON.stringify(vals, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 async function command(port, id, params) {
