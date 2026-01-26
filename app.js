@@ -157,16 +157,10 @@ function initOptions() {
    importMatrixRight();
   });
    $('#exportLeftBtn').click(function() {
-    //Export raw data (i.e. a 2D array instead of a 1d array of encoded bits)
-   exportMatrixLeft(true);
-  // No need to suport export of encoded file since import can handle either type
-  //  exportMatrixLeft(false)
+    exportMatrixLeft();
   });
    $('#exportRightBtn').click(function() {
-   //Export raw data (i.e. a 2D array instead of a 1d array of encoded bits)
-   exportMatrixRight(true);
-  // No need to suport export of encoded file since import can handle either type
-  //  exportMatrixRight(false)
+    exportMatrixRight();
   });
 	$('#wakeBtn').click(function() {
     wake(portLeft, true);
@@ -376,21 +370,14 @@ function setMatrixFromRawVals(matrix, vals) {
 
   for (let row = 0; row < height; row++) {
     for (let col = 0; col < width; col++) {
-      matrix[row][col] = !!!vals[row][col]
+      matrix[row][col] = vals[row][col] ? 0 : 1;
     }
   }
 }
 
-function exportMatrixLeft(raw) {
-  let vals
-  if (raw) {
-    //set vals as a 34 by 9 byte array
-    vals = getRawVals(matrix_left)
-  } else {
-    //encode vals into a 39-byte array
-    vals = prepareValsForDrawingLeft();
-  }
-  //save json file
+function exportMatrixLeft() {
+  // Export as 34x9 2D array
+  const vals = getRawVals(matrix_left);
   const blob = new Blob([JSON.stringify(vals)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -402,23 +389,16 @@ function exportMatrixLeft(raw) {
   URL.revokeObjectURL(url);
 }
 
-function exportMatrixRight(raw) {
-  let vals
-  if (raw) {
-    //set vals as a 34 by 9 byte array
-    vals = getRawVals(matrix_right)
-  } else {
-    //encode vals into a 39-byte array
-    vals = prepareValsForDrawingRight();
-  }
+function exportMatrixRight() {
+  // Export as 34x9 2D array
+  const vals = getRawVals(matrix_right);
   console.log('Exported values')
   console.log(vals)
-  //save json file
   const blob = new Blob([JSON.stringify(vals)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `${raw ? 'matrix_right(raw).json' : 'matrix_right.json'}`;
+  a.download = "matrix_right.json";
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
