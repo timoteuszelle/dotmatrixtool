@@ -72,8 +72,6 @@ $(function() {
   }
 });
 
-// startWakeLoop()
-
 function drawPattern(matrix, pattern, pos) {
   for (let col = 0; col < WIDTH; col++) {
     for (let row = 0; row < HEIGHT; row++) {
@@ -337,10 +335,10 @@ function prepareValsForDrawingRight() {
   return vals;
 }
 
-//Get matrix values set directly in a 39 x 9 item array
-function getRawValsMatrixRight() {
-	const width = matrix_right[0].length;
-	const height = matrix_right.length;
+//Get matrix values set directly in a 34 x 9 item array
+function getRawVals(matrix) {
+	const width = matrix[0].length;
+	const height = matrix.length;
 
   let vals = new Array(height)
   for (const i in [...Array(height).keys()]) {
@@ -349,26 +347,7 @@ function getRawValsMatrixRight() {
 
   for (let col = 0; col < width; col++) {
     for (let row = 0; row < height; row++) {
-      const cell = matrix_right[row][col];
-      vals[row][col] = (cell == null ||  cell == 1) ? 0 : 1
-    }
-  }
-  return vals;
-}
-
-//Get matrix values set directly in a 39 x 9 item array
-function getRawValsMatrixLeft() {
-	const width = matrix_left[0].length;
-	const height = matrix_left.length;
-
-  let vals = new Array(height)
-  for (const i in [...Array(height).keys()]) {
-    vals[i] = Array(width).fill(0)
-  }
-
-  for (let col = 0; col < width; col++) {
-    for (let row = 0; row < height; row++) {
-      const cell = matrix_left[row][col];
+      const cell = matrix[row][col];
       vals[row][col] = (cell == null || cell == 1) ? 0 : 1
     }
   }
@@ -376,55 +355,28 @@ function getRawValsMatrixLeft() {
 }
 
 //Set matrix values by decoding a 39-byte array
-function setMatrixLeftFromVals(vals) {
-  const width = matrix_left[0].length;
-  const height = matrix_left.length;
+function setMatrixFromVals(matrix, vals) {
+  const width = matrix[0].length;
+  const height = matrix.length;
 
   for (let row = 0; row < height; row++) {
     for (let col = 0; col < width; col++) {
       const i = col + row * width;
       const val = vals[Math.trunc(i/8)]
       const bit = (val >> i % 8) & 1;
-      matrix_left[row][col] = (bit + 1) % 2;
+      matrix[row][col] = (bit + 1) % 2;
     }
   }
 }
 
-//Set matrix values by decoding a 39-byte array
-function setMatrixRightFromVals(vals) {
-  const width = matrix_right[0].length;
-  const height = matrix_right.length;
+//Set matrix values from a 34 x 9 item array
+function setMatrixFromRawVals(matrix, vals) {
+  const width = matrix[0].length;
+  const height = matrix.length;
 
   for (let row = 0; row < height; row++) {
     for (let col = 0; col < width; col++) {
-      const i = col + row * width;
-      const val = vals[Math.trunc(i/8)]
-      const bit = (val >> i % 8) & 1;
-      matrix_right[row][col] = (bit + 1) % 2;
-    }
-  }
-}
-
-//Set matrix values from a 39 x 9 item array
-function setMatrixRightFromRawVals(vals) {
-  const width = matrix_right[0].length;
-  const height = matrix_right.length;
-
-  for (let row = 0; row < height; row++) {
-    for (let col = 0; col < width; col++) {
-      matrix_right[row][col] = !!!vals[row][col]
-    }
-  }
-}
-
-//Set matrix values from a 39 x 9 item array
-function setMatrixLeftFromRawVals(vals) {
-  const width = matrix_left[0].length;
-  const height = matrix_left.length;
-
-  for (let row = 0; row < height; row++) {
-    for (let col = 0; col < width; col++) {
-      matrix_left[row][col] = !!!vals[row][col]
+      matrix[row][col] = !!!vals[row][col]
     }
   }
 }
@@ -432,8 +384,8 @@ function setMatrixLeftFromRawVals(vals) {
 function exportMatrixLeft(raw) {
   let vals
   if (raw) {
-    //set vals as a 39 by 9 byte array
-    vals = getRawValsMatrixLeft()
+    //set vals as a 34 by 9 byte array
+    vals = getRawVals(matrix_left)
   } else {
     //encode vals into a 39-byte array
     vals = prepareValsForDrawingLeft();
@@ -453,8 +405,8 @@ function exportMatrixLeft(raw) {
 function exportMatrixRight(raw) {
   let vals
   if (raw) {
-    //set vals as a 39 by 9 byte array
-    vals = getRawValsMatrixRight()
+    //set vals as a 34 by 9 byte array
+    vals = getRawVals(matrix_right)
   } else {
     //encode vals into a 39-byte array
     vals = prepareValsForDrawingRight();
@@ -485,9 +437,9 @@ function importMatrixLeft() {
     reader.onload = function (e) {
       const vals = JSON.parse(e.target.result);
       if (vals[0].length > 1) {
-        setMatrixLeftFromRawVals(vals)
+        setMatrixFromRawVals(matrix_left, vals)
       } else {
-        setMatrixLeftFromVals(vals);
+        setMatrixFromVals(matrix_left, vals);
       }
       updateMatrix(matrix_left, 'left')
       sendToDisplay(true);
@@ -509,9 +461,9 @@ function importMatrixRight() {
     reader.onload = function (e) {
       const vals = JSON.parse(e.target.result);
       if (vals[0].length > 1) {
-        setMatrixRightFromRawVals(vals)
+        setMatrixFromRawVals(matrix_right, vals)
       } else {
-        setMatrixRightFromVals(vals);
+        setMatrixFromVals(matrix_right, vals);
       }
       updateMatrix(matrix_right, 'right')
       sendToDisplay(true);
